@@ -14,7 +14,7 @@ class WalletController extends Controller
     {
         try {
             $user = $request->user();
-            Log::info('💰 Getting wallet balance', ['user_id' => $user->id]);
+            Log::channel('api')->info('💰 Getting wallet balance', ['user_id' => $user->id]);
 
             $balance = $user->commission_balance ?? 0;
 
@@ -24,7 +24,7 @@ class WalletController extends Controller
                 'currency' => 'TZS'
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error getting wallet balance', [
+            Log::channel('api')->error('❌ Error getting wallet balance', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -49,7 +49,7 @@ class WalletController extends Controller
             $amount = (float) $request->amount;
             $currentBalance = $user->commission_balance ?? 0;
 
-            Log::info('💸 Processing wallet payment', [
+            Log::channel('api')->info('💸 Processing wallet payment', [
                 'user_id' => $user->id,
                 'amount' => $amount,
                 'order_id' => $request->order_id,
@@ -71,7 +71,7 @@ class WalletController extends Controller
             $transactionId = 'TXN_' . Str::random(10);
 
             // In production, you'd create a transaction record here
-            Log::info('✅ Wallet payment successful', [
+            Log::channel('api')->info('✅ Wallet payment successful', [
                 'user_id' => $user->id,
                 'transaction_id' => $transactionId,
                 'amount' => $amount,
@@ -85,7 +85,7 @@ class WalletController extends Controller
                 'remaining_balance' => $currentBalance - $amount
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error processing wallet payment', [
+            Log::channel('api')->error('❌ Error processing wallet payment', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -108,7 +108,7 @@ class WalletController extends Controller
             $user = $request->user();
             $amount = (float) $request->amount;
 
-            Log::info('💳 Adding funds to wallet', [
+            Log::channel('api')->info('💳 Adding funds to wallet', [
                 'user_id' => $user->id,
                 'amount' => $amount,
                 'payment_method' => $request->payment_method
@@ -123,7 +123,7 @@ class WalletController extends Controller
             // Generate transaction ID
             $transactionId = 'TOP_' . Str::random(10);
 
-            Log::info('✅ Funds added successfully', [
+            Log::channel('api')->info('✅ Funds added successfully', [
                 'user_id' => $user->id,
                 'transaction_id' => $transactionId,
                 'amount' => $amount,
@@ -137,7 +137,7 @@ class WalletController extends Controller
                 'new_balance' => $user->commission_balance
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error adding funds', [
+            Log::channel('api')->error('❌ Error adding funds', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -153,7 +153,7 @@ class WalletController extends Controller
     {
         try {
             $user = $request->user();
-            Log::info('📊 Getting transaction history', ['user_id' => $user->id]);
+            Log::channel('api')->info('📊 Getting transaction history', ['user_id' => $user->id]);
 
             // Mock transaction history - in production this would come from a transactions table
             $transactions = [
@@ -188,7 +188,7 @@ class WalletController extends Controller
                 'transactions' => $transactions
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error getting transaction history', [
+            Log::channel('api')->error('❌ Error getting transaction history', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -213,7 +213,7 @@ class WalletController extends Controller
             $amount = (float) $request->amount;
             $currentBalance = $user->commission_balance ?? 0;
 
-            Log::info('🔄 Processing wallet transfer', [
+            Log::channel('api')->info('🔄 Processing wallet transfer', [
                 'user_id' => $user->id,
                 'amount' => $amount,
                 'recipient' => $request->recipient_phone,
@@ -243,7 +243,7 @@ class WalletController extends Controller
 
             $transactionId = 'TRF_' . Str::random(10);
 
-            Log::info('✅ Wallet transfer successful', [
+            Log::channel('api')->info('✅ Wallet transfer successful', [
                 'user_id' => $user->id,
                 'recipient_id' => $recipient->id,
                 'transaction_id' => $transactionId,
@@ -257,7 +257,7 @@ class WalletController extends Controller
                 'remaining_balance' => $currentBalance - $amount
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error processing wallet transfer', [
+            Log::channel('api')->error('❌ Error processing wallet transfer', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -282,7 +282,7 @@ class WalletController extends Controller
             $amount = (float) $request->amount;
             $currentBalance = $user->commission_balance ?? 0;
 
-            Log::info('💸 Processing withdrawal', [
+            Log::channel('api')->info('💸 Processing withdrawal', [
                 'user_id' => $user->id,
                 'amount' => $amount,
                 'payment_method' => $request->payment_method,
@@ -302,7 +302,7 @@ class WalletController extends Controller
 
             $transactionId = 'WTH_' . Str::random(10);
 
-            Log::info('✅ Withdrawal request submitted', [
+            Log::channel('api')->info('✅ Withdrawal request submitted', [
                 'user_id' => $user->id,
                 'transaction_id' => $transactionId,
                 'amount' => $amount
@@ -315,7 +315,7 @@ class WalletController extends Controller
                 'remaining_balance' => $currentBalance - $amount
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error processing withdrawal', [
+            Log::channel('api')->error('❌ Error processing withdrawal', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);

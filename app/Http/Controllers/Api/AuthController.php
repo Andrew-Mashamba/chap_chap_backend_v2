@@ -19,7 +19,7 @@ class AuthController extends Controller
         $requestId = (string) Str::uuid();
         $start = microtime(true);
 
-        Log::info('🔍 Checking phone number', [
+        Log::channel('api')->info('🔍 Checking phone number', [
             'request_id' => $requestId,
             'method' => $request->method(),
             'route' => $request->path(),
@@ -35,7 +35,7 @@ class AuthController extends Controller
 
             // Check if phone number is blocked
             if ($this->isPhoneNumberBlocked($request->phone_number)) {
-                Log::warning('🚫 Blocked phone number attempt', [
+                Log::channel('api')->warning('🚫 Blocked phone number attempt', [
                     'request_id' => $requestId,
                     'phone_number' => $request->phone_number,
                     'ip' => $request->ip()
@@ -48,7 +48,7 @@ class AuthController extends Controller
 
             $member = Member::where('phone_number', $request->phone_number)->first();
 
-            Log::info('📱 Phone check result', [
+            Log::channel('api')->info('📱 Phone check result', [
                 'request_id' => $requestId,
                 'phone_number' => $request->phone_number,
                 'is_registered' => $member !== null,
@@ -62,7 +62,7 @@ class AuthController extends Controller
                 'registration_allowed' => true,
             ];
 
-            Log::info('✅ Phone check completed', [
+            Log::channel('api')->info('✅ Phone check completed', [
                 'request_id' => $requestId,
                 'duration_ms' => (int) ((microtime(true) - $start) * 1000),
                 'response' => [
@@ -74,7 +74,7 @@ class AuthController extends Controller
 
             return response()->json($response);
         } catch (\Exception $e) {
-            Log::error('❌ Phone check failed', [
+            Log::channel('api')->error('❌ Phone check failed', [
                 'request_id' => $requestId,
                 'phone_number' => $request->phone_number,
                 'error' => $e->getMessage(),
@@ -88,7 +88,7 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        Log::info('🔑 Login attempt', [
+        Log::channel('api')->info('🔑 Login attempt', [
             'phone' => $request->phone ?? $request->phone_number,
             'ip' => $request->ip(),
             'user_agent' => $request->userAgent()
@@ -103,7 +103,7 @@ class AuthController extends Controller
             $member = Member::where('phone_number', $request->phone)->first();
 
             if (!$member) {
-                Log::warning('⚠️ Login failed: Member not found', [
+                Log::channel('api')->warning('⚠️ Login failed: Member not found', [
                     'phone' => $request->phone
                 ]);
                 throw ValidationException::withMessages([
@@ -112,7 +112,7 @@ class AuthController extends Controller
             }
 
             if (!Hash::check($request->password, $member->pin)) {
-                Log::warning('⚠️ Login failed: Invalid password', [
+                Log::channel('api')->warning('⚠️ Login failed: Invalid password', [
                     'phone' => $request->phone,
                     'member_id' => $member->id
                 ]);
@@ -124,7 +124,7 @@ class AuthController extends Controller
             $token = $member->createToken('auth_token')->plainTextToken;
             $refreshToken = $member->createToken('refresh_token')->plainTextToken;
 
-            Log::info('✅ Login successful', [
+            Log::channel('api')->info('✅ Login successful', [
                 'member_id' => $member->id,
                 'phone_number' => $member->phone_number,
                 'seller_id' => $member->seller_id
@@ -138,13 +138,13 @@ class AuthController extends Controller
                 'user' => $member,
             ]);
         } catch (ValidationException $e) {
-            Log::warning('⚠️ Login validation failed', [
+            Log::channel('api')->warning('⚠️ Login validation failed', [
                 'phone' => $request->phone,
                 'errors' => $e->errors()
             ]);
             throw $e;
         } catch (\Exception $e) {
-            Log::error('❌ Login failed', [
+            Log::channel('api')->error('❌ Login failed', [
                 'phone' => $request->phone,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -166,7 +166,7 @@ class AuthController extends Controller
                 ], 401);
             }
 
-            Log::info('🔄 Token refresh attempt', [
+            Log::channel('api')->info('🔄 Token refresh attempt', [
                 'user_id' => $user->id,
                 'ip' => $request->ip()
             ]);
@@ -175,13 +175,13 @@ class AuthController extends Controller
 
             // Revoke old tokens
             $member->tokens()->delete();
-            Log::info('🗑️ Old tokens revoked', ['user_id' => $member->id]);
+            Log::channel('api')->info('🗑️ Old tokens revoked', ['user_id' => $member->id]);
 
             // Create new tokens
             $token = $member->createToken('auth_token')->plainTextToken;
             $refreshToken = $member->createToken('refresh_token')->plainTextToken;
 
-            Log::info('✅ Token refresh successful', ['user_id' => $member->id]);
+            Log::channel('api')->info('✅ Token refresh successful', ['user_id' => $member->id]);
 
             return response()->json([
                 'access_token' => $token,
@@ -189,7 +189,7 @@ class AuthController extends Controller
                 'token_type' => 'Bearer',
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Token refresh failed', [
+            Log::channel('api')->error('❌ Token refresh failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -200,18 +200,18 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $user = $request->user();
-        Log::info('🚪 Logout attempt', [
+        Log::channel('api')->info('🚪 Logout attempt', [
             'user_id' => $user->id,
             'ip' => $request->ip()
         ]);
 
         try {
             $request->user()->currentAccessToken()->delete();
-            Log::info('✅ Logout successful', ['user_id' => $user->id]);
+            Log::channel('api')->info('✅ Logout successful', ['user_id' => $user->id]);
 
             return response()->json(['message' => 'Successfully logged out']);
         } catch (\Exception $e) {
-            Log::error('❌ Logout failed', [
+            Log::channel('api')->error('❌ Logout failed', [
                 'user_id' => $user->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -222,7 +222,7 @@ class AuthController extends Controller
 
     public function sendOtp(Request $request)
     {
-        Log::info('📱 OTP send request', [
+        Log::channel('api')->info('📱 OTP send request', [
             'phone_number' => $request->phone_number,
             'ip' => $request->ip(),
             'user_agent' => $request->userAgent()
@@ -236,7 +236,7 @@ class AuthController extends Controller
 
             // Check if phone number is blocked
             if ($this->isPhoneNumberBlocked($request->phone_number)) {
-                Log::warning('🚫 Blocked phone number OTP attempt', [
+                Log::channel('api')->warning('🚫 Blocked phone number OTP attempt', [
                     'phone_number' => $request->phone_number,
                     'ip' => $request->ip()
                 ]);
@@ -255,14 +255,14 @@ class AuthController extends Controller
                 'prefer_sms' => true,
             ]);
 
-            Log::info('📱 OTP send result', [
+            Log::channel('api')->info('📱 OTP send result', [
                 'phone_number' => $request->phone_number,
                 'success' => $result['success']
             ]);
 
             return response()->json($result, $result['success'] ? 200 : 500);
         } catch (\Exception $e) {
-            Log::error('❌ OTP send failed', [
+            Log::channel('api')->error('❌ OTP send failed', [
                 'phone_number' => $request->phone_number,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -278,7 +278,7 @@ class AuthController extends Controller
     public function verifySponsor(Request $request)
     {
         try {
-            Log::info('🔍 Verifying sponsor code', [
+            Log::channel('api')->info('🔍 Verifying sponsor code', [
                 'sponsor_code' => $request->sponsor_code,
                 'ip' => $request->ip(),
                 'user_agent' => $request->userAgent(),
@@ -290,7 +290,7 @@ class AuthController extends Controller
 
             // Check if sponsor code is blocked
             if ($this->isSponsorIdBlocked($request->sponsor_code)) {
-                Log::warning('🚫 Blocked sponsor code attempt', [
+                Log::channel('api')->warning('🚫 Blocked sponsor code attempt', [
                     'sponsor_code' => $request->sponsor_code,
                     'ip' => $request->ip()
                 ]);
@@ -305,7 +305,7 @@ class AuthController extends Controller
                 ->first();
 
             if (!$sponsor) {
-                Log::warning('❌ Invalid sponsor code', [
+                Log::channel('api')->warning('❌ Invalid sponsor code', [
                     'sponsor_code' => $request->sponsor_code,
                 ]);
                 return response()->json([
@@ -319,7 +319,7 @@ class AuthController extends Controller
             $maxDownlines = $this->getMaxDownlinesForLevel($sponsor->seller_level);
             
             if ($downlineCount >= $maxDownlines) {
-                Log::warning('❌ Sponsor has reached maximum downlines', [
+                Log::channel('api')->warning('❌ Sponsor has reached maximum downlines', [
                     'sponsor_id' => $sponsor->seller_id,
                     'current_downlines' => $downlineCount,
                     'max_downlines' => $maxDownlines,
@@ -330,7 +330,7 @@ class AuthController extends Controller
                 ], 422);
             }
 
-            Log::info('✅ Sponsor verified', [
+            Log::channel('api')->info('✅ Sponsor verified', [
                 'sponsor_id' => $sponsor->seller_id,
                 'name' => $sponsor->first_name . ' ' . $sponsor->last_name,
                 'level' => $sponsor->seller_level,
@@ -351,7 +351,7 @@ class AuthController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Sponsor verification failed', [
+            Log::channel('api')->error('❌ Sponsor verification failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -367,7 +367,7 @@ class AuthController extends Controller
     {
         DB::beginTransaction();
         try {
-            Log::info('📝 Registration attempt', [
+            Log::channel('api')->info('📝 Registration attempt', [
                 'phone' => $request->phone_number,
                 'sponsor_code' => $request->sponsor_code,
                 'ip' => $request->ip(),
@@ -376,7 +376,7 @@ class AuthController extends Controller
 
             // Check for registration rate limiting
             if ($this->isRegistrationRateLimited($request->ip())) {
-                Log::warning('🚫 Registration rate limit exceeded', [
+                Log::channel('api')->warning('🚫 Registration rate limit exceeded', [
                     'ip' => $request->ip(),
                 ]);
                 return response()->json([
@@ -404,7 +404,7 @@ class AuthController extends Controller
                 ->first();
 
             if (!$sponsor) {
-                Log::warning('❌ Invalid sponsor ID during registration', [
+                Log::channel('api')->warning('❌ Invalid sponsor ID during registration', [
                     'sponsor_code' => $request->sponsor_code,
                 ]);
                 return response()->json([
@@ -418,7 +418,7 @@ class AuthController extends Controller
             $maxDownlines = $this->getMaxDownlinesForLevel($sponsor->seller_level);
             
             if ($downlineCount >= $maxDownlines) {
-                Log::warning('❌ Registration failed: Sponsor has reached maximum downlines', [
+                Log::channel('api')->warning('❌ Registration failed: Sponsor has reached maximum downlines', [
                     'sponsor_id' => $sponsor->seller_id,
                     'current_downlines' => $downlineCount,
                     'max_downlines' => $maxDownlines,
@@ -478,7 +478,7 @@ class AuthController extends Controller
 
             DB::commit();
 
-            Log::info('✅ Registration successful', [
+            Log::channel('api')->info('✅ Registration successful', [
                 'member_id' => $member->id,
                 'seller_id' => $member->seller_id,
                 'sponsor_id' => $sponsor->seller_id,
@@ -503,7 +503,7 @@ class AuthController extends Controller
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
-            Log::warning('❌ Registration validation failed', [
+            Log::channel('api')->warning('❌ Registration validation failed', [
                 'errors' => $e->errors(),
             ]);
             return response()->json([
@@ -513,7 +513,7 @@ class AuthController extends Controller
             ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('❌ Registration failed', [
+            Log::channel('api')->error('❌ Registration failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);

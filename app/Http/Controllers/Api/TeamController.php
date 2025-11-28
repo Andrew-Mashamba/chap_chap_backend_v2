@@ -14,7 +14,7 @@ class TeamController extends Controller
     {
         try {
             $user = $request->user();
-            Log::info('📋 Getting team members', ['user_id' => $user->id]);
+            Log::channel('api')->info('📋 Getting team members', ['user_id' => $user->id]);
 
             $teamMembers = Member::where('upline_id', $user->seller_id)
                 ->where('account_status', 'active')
@@ -26,7 +26,7 @@ class TeamController extends Controller
                 'data' => $teamMembers
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error getting team members', [
+            Log::channel('api')->error('❌ Error getting team members', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -42,7 +42,7 @@ class TeamController extends Controller
     {
         try {
             $user = $request->user();
-            Log::info('👆 Getting upliner', ['user_id' => $user->id]);
+            Log::channel('api')->info('👆 Getting upliner', ['user_id' => $user->id]);
 
             if (!$user->upline_id) {
                 return response()->json([
@@ -60,7 +60,7 @@ class TeamController extends Controller
                 'data' => $upliner
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error getting upliner', [
+            Log::channel('api')->error('❌ Error getting upliner', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -76,7 +76,7 @@ class TeamController extends Controller
     {
         try {
             $user = $request->user();
-            Log::info('📊 Getting team performance', ['user_id' => $user->id]);
+            Log::channel('api')->info('📊 Getting team performance', ['user_id' => $user->id]);
 
             // Get team members
             $teamMembers = Member::where('upline_id', $user->seller_id)->get();
@@ -98,7 +98,7 @@ class TeamController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error getting team performance', [
+            Log::channel('api')->error('❌ Error getting team performance', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -118,7 +118,7 @@ class TeamController extends Controller
             ]);
 
             $user = $request->user();
-            Log::info('➕ Adding downliner', [
+            Log::channel('api')->info('➕ Adding downliner', [
                 'user_id' => $user->id,
                 'member_number' => $request->memberNumber
             ]);
@@ -150,7 +150,7 @@ class TeamController extends Controller
                 'message' => 'Downliner added successfully'
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error adding downliner', [
+            Log::channel('api')->error('❌ Error adding downliner', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -168,7 +168,7 @@ class TeamController extends Controller
             $query = $request->query('query', '');
             $user = $request->user();
             
-            Log::info('🔍 Searching team members', [
+            Log::channel('api')->info('🔍 Searching team members', [
                 'user_id' => $user->id,
                 'query' => $query
             ]);
@@ -189,7 +189,7 @@ class TeamController extends Controller
                 'data' => $members
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error searching team members', [
+            Log::channel('api')->error('❌ Error searching team members', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -205,7 +205,7 @@ class TeamController extends Controller
     {
         try {
             $user = $request->user();
-            Log::info('📈 Getting member performance', [
+            Log::channel('api')->info('📈 Getting member performance', [
                 'user_id' => $user->id,
                 'member_id' => $memberId
             ]);
@@ -234,7 +234,7 @@ class TeamController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error getting member performance', [
+            Log::channel('api')->error('❌ Error getting member performance', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -255,7 +255,7 @@ class TeamController extends Controller
             ]);
 
             $user = $request->user();
-            Log::info('💬 Sending message to team member', [
+            Log::channel('api')->info('💬 Sending message to team member', [
                 'user_id' => $user->id,
                 'member_id' => $request->memberId
             ]);
@@ -265,7 +265,7 @@ class TeamController extends Controller
                 'message' => 'Message sent successfully'
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error sending message', [
+            Log::channel('api')->error('❌ Error sending message', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -281,7 +281,7 @@ class TeamController extends Controller
     {
         try {
             $user = $request->user();
-            Log::info('🔗 Generating referral code', ['user_id' => $user->id]);
+            Log::channel('api')->info('🔗 Generating referral code', ['user_id' => $user->id]);
 
             return response()->json([
                 'status' => 'success',
@@ -290,7 +290,7 @@ class TeamController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error generating referral code', [
+            Log::channel('api')->error('❌ Error generating referral code', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -310,7 +310,7 @@ class TeamController extends Controller
             ]);
 
             $user = $request->user();
-            Log::info('📱 Generating QR code', [
+            Log::channel('api')->info('📱 Generating QR code', [
                 'user_id' => $user->id,
                 'type' => $request->type
             ]);
@@ -328,7 +328,7 @@ class TeamController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error generating QR code', [
+            Log::channel('api')->error('❌ Error generating QR code', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -344,7 +344,7 @@ class TeamController extends Controller
     {
         try {
             $user = $request->user();
-            Log::info('🌳 Getting team hierarchy', ['user_id' => $user->id]);
+            Log::channel('api')->info('🌳 Getting team hierarchy', ['user_id' => $user->id]);
 
             $hierarchy = $this->buildHierarchy($user->seller_id);
 
@@ -353,7 +353,7 @@ class TeamController extends Controller
                 'data' => $hierarchy
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error getting team hierarchy', [
+            Log::channel('api')->error('❌ Error getting team hierarchy', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -390,7 +390,7 @@ class TeamController extends Controller
     {
         try {
             $user = $request->user();
-            Log::info('💰 Getting commission history', ['user_id' => $user->id]);
+            Log::channel('api')->info('💰 Getting commission history', ['user_id' => $user->id]);
 
             $commissions = [
                 [
@@ -416,7 +416,7 @@ class TeamController extends Controller
                 'data' => $commissions
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error getting commission history', [
+            Log::channel('api')->error('❌ Error getting commission history', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -437,7 +437,7 @@ class TeamController extends Controller
             ]);
 
             $user = $request->user();
-            Log::info('💸 Commission withdrawal request', [
+            Log::channel('api')->info('💸 Commission withdrawal request', [
                 'user_id' => $user->id,
                 'amount' => $request->amount,
                 'method' => $request->paymentMethod
@@ -448,7 +448,7 @@ class TeamController extends Controller
                 'message' => 'Withdrawal request submitted successfully'
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error processing withdrawal', [
+            Log::channel('api')->error('❌ Error processing withdrawal', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -464,7 +464,7 @@ class TeamController extends Controller
     {
         try {
             $user = $request->user();
-            Log::info('📊 Getting team analytics', ['user_id' => $user->id]);
+            Log::channel('api')->info('📊 Getting team analytics', ['user_id' => $user->id]);
 
             $teamMembers = Member::where('upline_id', $user->seller_id)->get();
             
@@ -480,7 +480,7 @@ class TeamController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error getting team analytics', [
+            Log::channel('api')->error('❌ Error getting team analytics', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -496,7 +496,7 @@ class TeamController extends Controller
     {
         try {
             $user = $request->user();
-            Log::info('📦 Getting product catalog', ['user_id' => $user->id]);
+            Log::channel('api')->info('📦 Getting product catalog', ['user_id' => $user->id]);
 
             $products = [
                 [
@@ -520,7 +520,7 @@ class TeamController extends Controller
                 'data' => $products
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error getting product catalog', [
+            Log::channel('api')->error('❌ Error getting product catalog', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -540,7 +540,7 @@ class TeamController extends Controller
             ]);
 
             $user = $request->user();
-            Log::info('🔗 Generating product share link', [
+            Log::channel('api')->info('🔗 Generating product share link', [
                 'user_id' => $user->id,
                 'product_id' => $request->productId
             ]);
@@ -554,7 +554,7 @@ class TeamController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error generating share link', [
+            Log::channel('api')->error('❌ Error generating share link', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -570,7 +570,7 @@ class TeamController extends Controller
     {
         try {
             $user = $request->user();
-            Log::info('📋 Getting commission rules', ['user_id' => $user->id]);
+            Log::channel('api')->info('📋 Getting commission rules', ['user_id' => $user->id]);
 
             $rules = [
                 'direct_sales' => 10,
@@ -586,7 +586,7 @@ class TeamController extends Controller
                 'data' => $rules
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error getting commission rules', [
+            Log::channel('api')->error('❌ Error getting commission rules', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -602,14 +602,14 @@ class TeamController extends Controller
     {
         try {
             $user = $request->user();
-            Log::info('⚙️ Updating MLM settings', ['user_id' => $user->id]);
+            Log::channel('api')->info('⚙️ Updating MLM settings', ['user_id' => $user->id]);
 
             return response()->json([
                 'status' => 'success',
                 'message' => 'MLM settings updated successfully'
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error updating MLM settings', [
+            Log::channel('api')->error('❌ Error updating MLM settings', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -625,7 +625,7 @@ class TeamController extends Controller
     {
         try {
             $user = $request->user();
-            Log::info('🔔 Getting team notifications', ['user_id' => $user->id]);
+            Log::channel('api')->info('🔔 Getting team notifications', ['user_id' => $user->id]);
 
             $notifications = [
                 [
@@ -651,7 +651,7 @@ class TeamController extends Controller
                 'data' => $notifications
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error getting notifications', [
+            Log::channel('api')->error('❌ Error getting notifications', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -667,7 +667,7 @@ class TeamController extends Controller
     {
         try {
             $user = $request->user();
-            Log::info('✅ Marking notification as read', [
+            Log::channel('api')->info('✅ Marking notification as read', [
                 'user_id' => $user->id,
                 'notification_id' => $notificationId
             ]);
@@ -677,7 +677,7 @@ class TeamController extends Controller
                 'message' => 'Notification marked as read'
             ]);
         } catch (\Exception $e) {
-            Log::error('❌ Error marking notification as read', [
+            Log::channel('api')->error('❌ Error marking notification as read', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);

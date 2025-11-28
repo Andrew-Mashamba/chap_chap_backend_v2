@@ -5,47 +5,78 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::query();
+        try {
+            Log::channel('api')->info('📦 Listing products', [
+                'user_id' => $request->user()?->id,
+                'category' => $request->category,
+                'search' => $request->search,
+                'limit' => $request->input('limit', 20),
+                'ip' => $request->ip()
+            ]);
 
-        // Apply filters
-        if ($request->has('category')) {
-            $query->where('category', $request->category);
-        }
+            $query = Product::query();
 
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('merchant_name', 'like', "%{$search}%");
-            });
-        }
+            // Apply filters
+            if ($request->has('category')) {
+                $query->where('category', $request->category);
+            }
 
-        // Paginate results
-        $products = $query->paginate($request->input('limit', 20));
+            if ($request->has('search')) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('description', 'like', "%{$search}%")
+                      ->orWhere('merchant_name', 'like', "%{$search}%");
+                });
+            }
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $products->items(),
-            'meta' => [
-                'current_page' => $products->currentPage(),
-                'last_page' => $products->lastPage(),
-                'per_page' => $products->perPage(),
+            // Paginate results
+            $products = $query->paginate($request->input('limit', 20));
+
+            Log::channel('api')->info('✅ Products listed successfully', [
                 'total' => $products->total(),
-            ],
-        ]);
+                'page' => $products->currentPage()
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $products->items(),
+                'meta' => [
+                    'current_page' => $products->currentPage(),
+                    'last_page' => $products->lastPage(),
+                    'per_page' => $products->perPage(),
+                    'total' => $products->total(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::channel('api')->error('❌ Error listing products', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to fetch products'
+            ], 500);
+        }
     }
 
     public function show($id)
     {
         try {
+            Log::channel('api')->info('📦 Getting product details', [
+                'product_id' => $id,
+                'ip' => request()->ip()
+            ]);
+
             $product = Product::findOrFail($id);
-            
+
             // Map category to ID
             $categoryIdMap = [
                 'Electronics' => 1,
@@ -56,47 +87,89 @@ class ProductController extends Controller
                 'Sports & Outdoors' => 6,
                 'Baby & Kids' => 7,
             ];
-            
+
             $categoryId = $categoryIdMap[$product->category] ?? 99;
-            
+
+            Log::channel('api')->info('✅ Product retrieved successfully', [
+                'product_id' => $id,
+                'product_name' => $product->name,
+                'category' => $product->category
+            ]);
+
             return response()->json([
                 'status' => 'success',
                 'data' => $this->transformProductForFlutter($product, $categoryId)
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::channel('api')->warning('⚠️ Product not found', [
+                'product_id' => $id
+            ]);
+
             return response()->json([
                 'status' => 'error',
                 'message' => 'Product not found'
             ], 404);
+        } catch (\Exception $e) {
+            Log::channel('api')->error('❌ Error getting product', [
+                'product_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to fetch product'
+            ], 500);
         }
     }
 
     public function groupedByCategory()
     {
-        $products = Product::all()->groupBy('category');
+        try {
+            Log::channel('api')->info('📦 Getting products grouped by category', [
+                'ip' => request()->ip()
+            ]);
 
-        $grouped = [];
-        $categoryIdMap = [
-            'Electronics' => 1,
-            'Fashion' => 2,
-            'Beauty & Health' => 3,
-            'Home & Living' => 4,
-            'Groceries' => 5,
-            'Sports & Outdoors' => 6,
-            'Baby & Kids' => 7,
-        ];
+            $products = Product::all()->groupBy('category');
 
-        foreach ($products as $category => $items) {
-            $transformedItems = $items->map(function ($product) use ($category, $categoryIdMap) {
-                return $this->transformProductForFlutter($product, $categoryIdMap[$category] ?? 99);
-            });
-            $grouped[$category] = $transformedItems;
+            $grouped = [];
+            $categoryIdMap = [
+                'Electronics' => 1,
+                'Fashion' => 2,
+                'Beauty & Health' => 3,
+                'Home & Living' => 4,
+                'Groceries' => 5,
+                'Sports & Outdoors' => 6,
+                'Baby & Kids' => 7,
+            ];
+
+            foreach ($products as $category => $items) {
+                $transformedItems = $items->map(function ($product) use ($category, $categoryIdMap) {
+                    return $this->transformProductForFlutter($product, $categoryIdMap[$category] ?? 99);
+                });
+                $grouped[$category] = $transformedItems;
+            }
+
+            Log::channel('api')->info('✅ Products grouped successfully', [
+                'categories_count' => count($grouped),
+                'total_products' => $products->flatten()->count()
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $grouped
+            ]);
+        } catch (\Exception $e) {
+            Log::channel('api')->error('❌ Error grouping products by category', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to fetch grouped products'
+            ], 500);
         }
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $grouped
-        ]);
     }
 
     private function transformProductForFlutter($product, $categoryId = 1)

@@ -23,39 +23,44 @@ class PunguzoProductController extends Controller
     public function getProducts(Request $request)
     {
         try {
-            Log::info('🔄 Fetching products from Punguzo API');
-            
+            Log::channel('api')->info('🔄 Fetching products from Punguzo API', [
+                'ip' => $request->ip()
+            ]);
+
             // First, let's check if we have Punguzo API credentials
             if (empty($this->punguzoApiKey)) {
-                Log::warning('⚠️ Punguzo API key not configured. Using mock data.');
+                Log::channel('api')->warning('⚠️ Punguzo API key not configured. Using mock data.');
                 return $this->populateWithMockData();
             }
-            
+
             // Fetch products from Punguzo API
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->punguzoApiKey,
                 'Accept' => 'application/json',
             ])->get($this->punguzoBaseUrl . '/api/products');
-            
+
             if ($response->successful()) {
                 $punguzoProducts = $response->json()['data'] ?? [];
+                Log::channel('api')->info('✅ Punguzo products fetched successfully', [
+                    'count' => count($punguzoProducts)
+                ]);
                 return $this->importProducts($punguzoProducts);
             } else {
-                Log::error('❌ Failed to fetch products from Punguzo', [
+                Log::channel('api')->error('❌ Failed to fetch products from Punguzo', [
                     'status' => $response->status(),
                     'error' => $response->body()
                 ]);
-                
+
                 // Use mock data as fallback
                 return $this->populateWithMockData();
             }
-            
+
         } catch (\Exception $e) {
-            Log::error('❌ Error fetching Punguzo products', [
+            Log::channel('api')->error('❌ Error fetching Punguzo products', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             // Use mock data as fallback
             return $this->populateWithMockData();
         }
@@ -120,8 +125,8 @@ class PunguzoProductController extends Controller
             }
             
             DB::commit();
-            
-            Log::info('✅ Punguzo products import completed', [
+
+            Log::channel('api')->info('✅ Punguzo products import completed', [
                 'imported' => $imported,
                 'updated' => $updated
             ]);
@@ -144,7 +149,7 @@ class PunguzoProductController extends Controller
     
     private function populateWithMockData()
     {
-        Log::info('📦 Populating database with mock Punguzo products');
+        Log::channel('api')->info('📦 Populating database with mock Punguzo products');
         
         $mockProducts = [
             // Electronics
