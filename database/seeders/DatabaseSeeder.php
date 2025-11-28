@@ -13,16 +13,28 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Create admin user for Laravel
+        User::factory()->create([
+            'name' => 'Admin User',
+            'email' => 'admin@chapchap.com',
+            'password' => bcrypt('password'),
+        ]);
 
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'password' => bcrypt('password'),
         ]);
 
+        // Call all seeders in order
         $this->call([
             MemberSeeder::class,
             ProductSeeder::class,
+            OrderSeeder::class,
+            TransactionSeeder::class,
+            FeedbackSeeder::class,
         ]);
+
+        $this->command->info('Database seeding completed successfully!');
     }
 }
