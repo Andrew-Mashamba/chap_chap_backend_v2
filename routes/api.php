@@ -14,8 +14,10 @@ use App\Http\Controllers\PunguzoPaymentController;
 use App\Http\Controllers\PunguzoProductController;
 use App\Http\Controllers\Api\FCMController;
 use App\Http\Controllers\Api\MessagingController;
+use App\Http\Controllers\Api\ConfigController;
 
 // Public Routes
+Route::get('/config/business', [ConfigController::class, 'getBusinessConfig']);
 Route::prefix('auth')->group(function () {
     Route::post('/check-phone', [AuthController::class, 'checkPhone']);
     Route::post('/verify-sponsor', [AuthController::class, 'verifySponsor']);
